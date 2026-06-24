@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Exception Management &amp; Alert Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#d8e2ff",
+                        "surface-container": "#171f33",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-secondary": "#213145",
+                        "primary-fixed-dim": "#adc6ff",
+                        "on-surface-variant": "#c2c6d6",
+                        "surface": "#0b1326",
+                        "surface-container-lowest": "#060e20",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "surface-dim": "#0b1326",
+                        "outline": "#8c909f",
+                        "on-error-container": "#ffdad6",
+                        "error-container": "#93000a",
+                        "surface-bright": "#31394d",
+                        "tertiary-fixed": "#ffdcc6",
+                        "primary-container": "#4d8eff",
+                        "on-secondary-container": "#a9bad3",
+                        "tertiary-container": "#df7412",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-on-surface": "#283044",
+                        "on-tertiary-fixed": "#311400",
+                        "inverse-surface": "#dae2fd",
+                        "surface-container-high": "#222a3d",
+                        "surface-tint": "#adc6ff",
+                        "on-primary-fixed-variant": "#004395",
+                        "primary": "#adc6ff",
+                        "on-surface": "#dae2fd",
+                        "secondary-container": "#3a4a5f",
+                        "surface-container-highest": "#2d3449",
+                        "on-background": "#dae2fd",
+                        "surface-container-low": "#131b2e",
+                        "outline-variant": "#424754",
+                        "on-tertiary-container": "#461f00",
+                        "on-primary-fixed": "#001a42",
+                        "on-primary-container": "#00285d",
+                        "on-primary": "#002e6a",
+                        "on-error": "#690005",
+                        "inverse-primary": "#005ac2",
+                        "secondary-fixed": "#d3e4fe",
+                        "surface-variant": "#2d3449",
+                        "secondary": "#b7c8e1",
+                        "tertiary": "#ffb786",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "background": "#0b1326",
+                        "on-tertiary": "#502400"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-padding": "24px",
+                        "row-gap": "8px",
+                        "column-gap": "16px",
+                        "base": "4px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "title-sm": ["Inter"],
+                        "code-md": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "title-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "code-md": ["13px", { "lineHeight": "20px", "fontWeight": "450" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["12px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .material-symbols-outlined {
+                font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            }
+            .material-symbols-outlined.fill-icon {
+                font-variation-settings: 'FILL' 1;
+            }
+            
+            /* Custom Scrollbar for dense data views */
+            ::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: theme('colors.surface-container-lowest');
+            }
+            ::-webkit-scrollbar-thumb {
+                background: theme('colors.surface-variant');
+                border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: theme('colors.outline-variant');
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md flex h-screen overflow-hidden antialiased">
+<!-- Shared Component: SideNavBar -->
+<nav class="bg-surface-container-low text-primary font-body-md text-body-md h-screen w-[240px] flex-shrink-0 sticky top-0 left-0 border-r border-outline-variant flex flex-col py-gutter hidden md:flex z-40">
+<div class="px-gutter mb-6 flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center overflow-hidden shrink-0">
+<img alt="User Workspace Avatar" class="w-full h-full object-cover opacity-80" data-alt="A stylized, low-poly 3D render of a futuristic server rack emitting a soft blue glow against a dark void background, corporate tech aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtgdzGf65uXQe10oP4ZQhwBPPCCP5FjlgBYnZkhdLyK-XpO1DC-cQ_6Fo_JZZWszyInIW6N2ntWYnOkMc3E7v5EZInv7Ux1Lr46GlF_OK4VPXI3PvDzucXWWr6mEjeuoKmRPSMXnx86jYiRtYesiDVv8X5stOFaZTghwTc20yCDW-JCyOeJEH3oPcPOezwFgd1lz6cOngN7L-gIEtMXUzKZfBi4hs6g7MI-sO01fdaVHvw3Q98OKoNQ2U1toVlt0kaQKGtpVUSJek"/>
+</div>
+<div class="overflow-hidden">
+<h1 class="font-headline-md text-headline-md font-bold text-primary truncate">System Ops</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">v2.4.0-stable</p>
+</div>
+</div>
+<div class="px-gutter mb-4">
+<button class="w-full bg-primary text-on-primary font-title-sm text-title-sm rounded py-2 px-4 flex items-center justify-center gap-2 hover:bg-primary-fixed-dim transition-colors duration-150">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Project
+            </button>
+</div>
+<div class="flex-1 overflow-y-auto px-2 flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">apps</span>
+                Applications
+            </a>
+<!-- Active Navigation Item (Intent Match: Error Browser -> Error Logs) -->
+<a class="flex items-center gap-3 px-3 py-2 rounded text-primary font-bold bg-secondary-container/30 border-r-2 border-primary transition-colors duration-150 cursor-pointer active:opacity-80" href="#">
+<span class="material-symbols-outlined text-[20px] fill-icon">bug_report</span>
+                Error Logs
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">warning</span>
+                Alerts
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">group</span>
+                Teams
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">notifications_active</span>
+                Notification Groups
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">speed</span>
+                Thresholds
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">trending_up</span>
+                Escalations
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto px-2 pt-4 border-t border-outline-variant flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">description</span>
+                Documentation
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors duration-150 cursor-pointer active:opacity-80 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">help</span>
+                Support
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col min-w-0 bg-background relative">
+<!-- Shared Component: TopAppBar -->
+<header class="bg-surface text-primary font-title-sm text-title-sm h-14 w-full sticky top-0 z-30 border-b border-outline-variant flex justify-between items-center px-container-padding shrink-0 shadow-sm">
+<div class="flex items-center gap-6 h-full">
+<span class="font-headline-md text-headline-md font-black text-primary tracking-tight">OpsConsole</span>
+<div class="hidden lg:flex items-center bg-surface-container-low border border-outline-variant rounded-full px-3 py-1.5 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/50 transition-all ml-4">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-sm font-body-sm text-on-surface w-48 placeholder-on-surface-variant/70 ml-2 py-0" placeholder="Search resources..." type="text"/>
+<span class="text-on-surface-variant font-code-md text-[10px] bg-surface-variant px-1.5 rounded ml-2">⌘K</span>
+</div>
+<nav class="hidden md:flex items-center gap-6 h-full ml-6">
+<!-- Active Link (Intent: Most errors triaged in Prod) -->
+<a class="text-primary font-bold border-b-2 border-primary h-full flex items-center px-1" href="#">Prod</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors h-full flex items-center px-1" href="#">Staging</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors h-full flex items-center px-1" href="#">Dev</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center justify-center bg-secondary-container hover:bg-secondary-container/80 text-on-surface font-title-sm text-title-sm px-4 py-1.5 rounded transition-colors text-sm border border-outline-variant/30">
+<span class="material-symbols-outlined text-[16px] mr-1.5">rocket_launch</span>
+                    Deploy
+                </button>
+<div class="flex items-center gap-2 border-l border-outline-variant pl-4 ml-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-container-highest">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-container-highest hidden sm:block">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+<button class="ml-2 w-8 h-8 rounded-full bg-surface-variant border border-outline-variant overflow-hidden hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50">
+<img alt="User profile photo" class="w-full h-full object-cover" data-alt="A macro shot of abstract dark blue liquid metallic ripples reflecting stark white studio lights, conveying a highly technical and sleek corporate profile aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAPaye_oGt6D1q8g21Dda2-K3KNbodKT4S_p6FIDYSPK_sS6ZNAFo4GXvAgfeJoVQDI1JhZZr5oQ69-oppMYWJ8CtKYgjfg2sUCA4DuE_Tm7JdrhIL9C3E3_ShPw8yAmVvDlINqElTB4943PkNMgB_iOzJ_bz_POawXPTrxIpzwXL4Vp65zy-BPzZf3K9_x0nBxsic00_vxzcd79f5RqJ3omEudGkenaCNiPJNgQgUuqG5G55UxcWnjcPiEuoC01Yc1vtbVIpT6InA"/>
+</button>
+</div>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<main class="flex-1 flex flex-col p-container-padding overflow-hidden gap-column-gap">
+<!-- Page Header Area -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 shrink-0">
+<div>
+<h2 class="font-title-sm text-title-sm text-on-surface-variant mb-1 uppercase tracking-wider">Exception Management</h2>
+<h1 class="font-display-lg text-display-lg text-on-surface">Error Browser</h1>
+</div>
+<div class="flex items-center gap-3">
+<label class="flex items-center gap-2 cursor-pointer bg-surface border border-outline-variant px-3 py-1.5 rounded hover:bg-surface-container-lowest transition-colors">
+<div class="relative">
+<input checked="" class="sr-only" type="checkbox"/>
+<div class="block bg-secondary-container w-8 h-4 rounded-full"></div>
+<div class="dot absolute left-1 top-1 bg-primary w-2 h-2 rounded-full transition transform translate-x-4"></div>
+</div>
+<span class="font-title-sm text-body-sm text-on-surface flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+                            Live Tail
+                        </span>
+</label>
+<button class="bg-surface border border-outline-variant hover:border-primary text-on-surface hover:text-primary px-3 py-1.5 rounded font-title-sm text-body-sm transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">download</span>
+                        Export CSV
+                    </button>
+</div>
+</div>
+<!-- Powerful Filter Bar -->
+<div class="bg-surface-container-low border border-outline-variant rounded p-gutter shrink-0 flex flex-col gap-3 relative z-20">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-gutter items-end">
+<!-- Date Range -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Time Range</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline-variant text-on-surface rounded font-body-sm text-body-sm py-1.5 pl-2 pr-8 focus:border-primary focus:ring-1 focus:ring-primary appearance-none">
+<option>Last 15 minutes</option>
+<option>Last 1 hour</option>
+<option selected="">Last 24 hours</option>
+<option>Last 7 days</option>
+<option>Last 30 days</option>
+<option>Custom Range...</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1.5 text-on-surface-variant pointer-events-none text-[16px]">schedule</span>
+</div>
+</div>
+<!-- Environment -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Environment</label>
+<select class="w-full bg-surface border border-outline-variant text-on-surface rounded font-body-sm text-body-sm py-1.5 px-2 focus:border-primary focus:ring-1 focus:ring-primary">
+<option selected="">Production</option>
+<option>Staging</option>
+<option>Development</option>
+<option>All Environments</option>
+</select>
+</div>
+<!-- Application Dropdown -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Application</label>
+<select class="w-full bg-surface border border-outline-variant text-on-surface rounded font-body-sm text-body-sm py-1.5 px-2 focus:border-primary focus:ring-1 focus:ring-primary">
+<option value="">All Applications</option>
+<option selected="">auth-service-v2</option>
+<option>payment-gateway</option>
+<option>inventory-worker</option>
+<option>frontend-dashboard</option>
+</select>
+</div>
+<!-- Machine Input -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">Host / Machine</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded font-code-md text-code-md py-1.5 pl-8 pr-2 focus:border-primary focus:ring-1 focus:ring-primary placeholder-on-surface-variant/50" placeholder="e.g. prod-web-04" type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant pointer-events-none text-[16px]">dns</span>
+</div>
+</div>
+<!-- User Input -->
+<div class="flex flex-col gap-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant">User / Account ID</label>
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant text-on-surface rounded font-body-sm text-body-sm py-1.5 pl-8 pr-2 focus:border-primary focus:ring-1 focus:ring-primary placeholder-on-surface-variant/50" placeholder="UUID or Email" type="text"/>
+<span class="material-symbols-outlined absolute left-2 top-1.5 text-on-surface-variant pointer-events-none text-[16px]">person</span>
+</div>
+</div>
+<!-- Filter Actions -->
+<div class="flex gap-2 justify-end lg:col-span-4 xl:col-span-1">
+<button class="bg-surface border border-outline-variant hover:border-on-surface-variant text-on-surface px-3 py-1.5 rounded font-title-sm text-body-sm transition-colors flex-1 flex justify-center items-center">
+                            Reset
+                        </button>
+<button class="bg-primary hover:bg-primary-fixed-dim text-on-primary px-3 py-1.5 rounded font-title-sm text-body-sm transition-colors flex-2 flex justify-center items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">filter_list</span>
+                            Apply Filter
+                        </button>
+</div>
+</div>
+<!-- Active Severity Filters (Simulated Multi-select chips) -->
+<div class="flex flex-wrap items-center gap-2 mt-1 pt-3 border-t border-outline-variant/50">
+<span class="font-label-caps text-label-caps text-on-surface-variant mr-1">Severity:</span>
+<button class="bg-error-container/20 border border-error/50 text-error rounded-full px-2.5 py-0.5 font-title-sm text-[11px] flex items-center gap-1 hover:bg-error-container/40 transition-colors">
+                        Critical
+                        <span class="material-symbols-outlined text-[12px] cursor-pointer">close</span>
+</button>
+<button class="bg-tertiary-container/20 border border-tertiary/50 text-tertiary rounded-full px-2.5 py-0.5 font-title-sm text-[11px] flex items-center gap-1 hover:bg-tertiary-container/40 transition-colors">
+                        Error
+                        <span class="material-symbols-outlined text-[12px] cursor-pointer">close</span>
+</button>
+<button class="bg-surface border border-outline-variant text-on-surface-variant rounded-full px-2.5 py-0.5 font-body-sm text-[11px] flex items-center gap-1 hover:bg-surface-variant transition-colors hover:text-on-surface border-dashed">
+<span class="material-symbols-outlined text-[12px]">add</span>
+                        Warning
+                    </button>
+</div>
+</div>
+<!-- Main Data Table Container -->
+<div class="flex-1 bg-surface border border-outline-variant rounded flex flex-col overflow-hidden relative z-10 shadow-sm">
+<!-- Table Scroll Area -->
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse min-w-[1200px]">
+<thead class="bg-surface-container-low sticky top-0 z-20">
+<tr>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap cursor-pointer hover:text-primary group w-[160px]">
+<div class="flex items-center gap-1">Timestamp <span class="material-symbols-outlined text-[14px] opacity-0 group-hover:opacity-100 transition-opacity">arrow_downward</span></div>
+</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[60px] text-center">Status</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[140px]">Application</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[120px]">Machine</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap">Error Message</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[250px]">Stack Trace Preview</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[140px]">App Path</th>
+<th class="py-2 px-3 border-b border-outline-variant font-label-caps text-label-caps text-on-surface-variant whitespace-nowrap w-[120px]">Public IP</th>
+<th class="py-2 px-3 border-b border-outline-variant w-[40px]"></th> <!-- Action column -->
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm divide-y divide-outline-variant/30">
+<!-- Row 1: Critical -->
+<tr class="hover:bg-surface-container-highest transition-colors h-[40px] group cursor-pointer border-l-2 border-l-error bg-error-container/5">
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">2023-10-27 14:32:01.442</td>
+<td class="py-1 px-3 text-center">
+<div class="flex justify-center" title="Critical">
+<span class="material-symbols-outlined text-[16px] text-error fill-icon">cancel</span>
+</div>
+</td>
+<td class="py-1 px-3 text-on-surface truncate">auth-service-v2</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px] truncate">prod-auth-a-01</td>
+<td class="py-1 px-3 font-title-sm text-on-surface truncate max-w-[300px]">DatabaseConnectionException: Unable to acquire connection from pool</td>
+<td class="py-1 px-3 font-code-md text-[11px] text-primary-fixed-dim truncate max-w-[250px]">at org.hibernate.engine.jdbc.spi...</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[11px] truncate">/api/v2/oauth/token</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">192.168.1.45</td>
+<td class="py-1 px-3 text-right">
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Error -->
+<tr class="hover:bg-surface-container-highest transition-colors h-[40px] group cursor-pointer border-l-2 border-l-tertiary">
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">2023-10-27 14:31:55.109</td>
+<td class="py-1 px-3 text-center">
+<div class="flex justify-center" title="Error">
+<span class="material-symbols-outlined text-[16px] text-tertiary fill-icon">error</span>
+</div>
+</td>
+<td class="py-1 px-3 text-on-surface truncate">payment-gateway</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px] truncate">prod-pay-c-03</td>
+<td class="py-1 px-3 font-title-sm text-on-surface truncate max-w-[300px]">StripeAPIError: Card declined due to insufficient funds</td>
+<td class="py-1 px-3 font-code-md text-[11px] text-primary-fixed-dim truncate max-w-[250px]">at com.stripe.net.LiveStripeRes...</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[11px] truncate">/api/v1/charge/process</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">203.0.113.88</td>
+<td class="py-1 px-3 text-right">
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Error -->
+<tr class="hover:bg-surface-container-highest transition-colors h-[40px] group cursor-pointer border-l-2 border-l-tertiary">
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">2023-10-27 14:30:12.882</td>
+<td class="py-1 px-3 text-center">
+<div class="flex justify-center" title="Error">
+<span class="material-symbols-outlined text-[16px] text-tertiary fill-icon">error</span>
+</div>
+</td>
+<td class="py-1 px-3 text-on-surface truncate">inventory-worker</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px] truncate">prod-wrk-b-12</td>
+<td class="py-1 px-3 font-title-sm text-on-surface truncate max-w-[300px]">TimeoutException: Redis lock acquisition timed out after 5000ms</td>
+<td class="py-1 px-3 font-code-md text-[11px] text-primary-fixed-dim truncate max-w-[250px]">at redis.clients.jedis.Jedis.set...</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[11px] truncate">internal-queue-job-884</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">10.44.2.19</td>
+<td class="py-1 px-3 text-right">
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Critical -->
+<tr class="hover:bg-surface-container-highest transition-colors h-[40px] group cursor-pointer border-l-2 border-l-error bg-error-container/5">
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">2023-10-27 14:28:44.001</td>
+<td class="py-1 px-3 text-center">
+<div class="flex justify-center" title="Critical">
+<span class="material-symbols-outlined text-[16px] text-error fill-icon">cancel</span>
+</div>
+</td>
+<td class="py-1 px-3 text-on-surface truncate">auth-service-v2</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px] truncate">prod-auth-a-02</td>
+<td class="py-1 px-3 font-title-sm text-on-surface truncate max-w-[300px]">NullPointerException: Token payload signature missing</td>
+<td class="py-1 px-3 font-code-md text-[11px] text-primary-fixed-dim truncate max-w-[250px]">at com.security.jwt.Validator.veri...</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[11px] truncate">/api/v2/users/me</td>
+<td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">198.51.100.12</td>
+<td class="py-1 px-3 text-right">
+<button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">open_in_new</span>
+</button>
+</td>
+</tr>
+<!-- Filler Rows for density -->
+<script>
+                                for(let i=0; i<10; i++) {
+                                    document.write(`
+                                    <tr class="hover:bg-surface-container-highest transition-colors h-[40px] group cursor-pointer border-l-2 border-l-tertiary/50">
+                                        <td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">2023-10-27 14:${20-i}:0${i}.11${i}</td>
+                                        <td class="py-1 px-3 text-center">
+                                            <div class="flex justify-center" title="Warning">
+                                                <span class="material-symbols-outlined text-[16px] text-tertiary-fixed-dim">warning</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-1 px-3 text-on-surface truncate">frontend-dashboard</td>
+                                        <td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px] truncate">edge-node-${i}</td>
+                                        <td class="py-1 px-3 font-title-sm text-on-surface-variant truncate max-w-[300px] font-normal">JS Error: Cannot read properties of undefined (reading 'map')</td>
+                                        <td class="py-1 px-3 font-code-md text-[11px] text-on-surface-variant/70 truncate max-w-[250px]">at RenderList (app.main.js:42:19)</td>
+                                        <td class="py-1 px-3 text-on-surface-variant font-code-md text-[11px] truncate">/dashboard/metrics</td>
+                                        <td class="py-1 px-3 text-on-surface-variant font-code-md text-[12px]">172.16.0.${100+i}</td>
+                                        <td class="py-1 px-3 text-right">
+                                            <button class="text-on-surface-variant hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    `);
+                                }
+                            </script>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination/Footer -->
+<div class="bg-surface-container-low border-t border-outline-variant p-2 flex items-center justify-between shrink-0">
+<div class="font-body-sm text-body-sm text-on-surface-variant ml-2">
+                        Showing <span class="font-bold text-on-surface">1</span> to <span class="font-bold text-on-surface">14</span> of <span class="font-bold text-on-surface">1,204</span> errors
+                    </div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<div class="flex gap-1">
+<button class="w-8 h-8 rounded bg-primary-container text-on-primary-container font-title-sm text-body-sm flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded hover:bg-surface-variant text-on-surface-variant font-body-sm text-body-sm flex items-center justify-center">2</button>
+<button class="w-8 h-8 rounded hover:bg-surface-variant text-on-surface-variant font-body-sm text-body-sm flex items-center justify-center">3</button>
+<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
+<button class="w-8 h-8 rounded hover:bg-surface-variant text-on-surface-variant font-body-sm text-body-sm flex items-center justify-center">86</button>
+</div>
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface;
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  @keyframes slidein {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2d3449;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #424754;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background-color: rgba(23, 31, 51, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid #1e293b;
+  }
+  .zebra-row:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+  .hover-row:hover {
+    background-color: rgba(45, 52, 73, 0.5);
+  }
+  .field {
+    @apply w-full bg-surface border border-outline-variant text-on-surface rounded-lg text-body-sm py-2 px-2.5 focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none transition-colors;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg text-body-sm font-medium bg-primary-container text-on-primary-container hover:bg-primary-fixed-dim hover:text-on-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 h-9 px-4 rounded-lg text-body-sm font-medium bg-surface-container border border-outline-variant text-on-surface hover:border-primary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-lg text-body-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors;
+  }
+  .icon-btn {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container-highest transition-colors;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+  user-select: none;
+}
