@@ -1,0 +1,34 @@
+# Production compose for THIS server (spark-1a6f).
+#
+# Elasticsearch, Kibana and PostgreSQL already run as separate containers on the
+# host (bound to 127.0.0.1). This file runs ONLY the API and reaches those data
+# stores over the host loopback via network_mode: host — so DATABASE_URL /
+# ELASTICSEARCH_URL in backend/.env point at localhost:5432 / localhost:9200.
+#
+#   Build & start:   docker compose -f docker-compose.prod.yml up -d --build
+#   Migrate (once):  docker compose -f docker-compose.prod.yml run --rm api node dist/db/migrate.js
+#   Seed ES index:   docker compose -f docker-compose.prod.yml run --rm api node dist/db/seed.js
+#   Logs:            docker compose -f docker-compose.prod.yml logs -f api
+#
+# Do NOT use the dev docker-compose.yml here — it starts its own Postgres/ES and
+# would collide with the existing containers on port 9200.
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: exmgmt-api
+    restart: unless-stopped
+    # Share the host network so the API can reach the existing
+    # 127.0.0.1:9200 (Elasticsearch) and 127.0.0.1:5432 (Postgres) containers.
+    network_mode: host
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
