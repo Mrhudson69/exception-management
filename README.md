@@ -153,6 +153,7 @@ On ingest the platform:
 | GET/POST/PATCH/DELETE | `/api/applications` | Application registry & ownership |
 | GET/POST/PATCH/DELETE | `/api/teams` | Teams |
 | GET/POST/PATCH/DELETE | `/api/channels` · POST `/api/channels/:id/test` | Notification channels (+ live test) |
+| GET `/api/branding` (public) · PUT `/api/settings/branding` (admin) | Custom branding (app/product name, tagline, logo) |
 | GET/POST/PATCH/DELETE | `/api/notification-groups` | Notification groups |
 | GET/POST/PATCH/DELETE | `/api/thresholds` | Alert thresholds |
 | GET/POST/PATCH/DELETE | `/api/escalations` | Escalation steps |

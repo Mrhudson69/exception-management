@@ -36,3 +36,8 @@ coverage/
 
 # Claude local settings
 settings.local.json
+.claude/
+.vscode/
+
+# TS build info
+*.tsbuildinfo

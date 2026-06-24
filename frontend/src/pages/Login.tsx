@@ -1,9 +1,12 @@
 import { FormEvent, useState } from "react";
 import { useAuth } from "../auth/AuthContext";
+import { useBranding } from "../branding/BrandingContext";
+import { BrandLogo } from "../components/Layout";
 import { Icon } from "../components/ui";
 
 export default function Login() {
   const { login } = useAuth();
+  const { branding } = useBranding();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +33,10 @@ export default function Login() {
 
       <div className="relative w-full max-w-sm px-6">
         <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center">
-            <Icon name="hub" size={24} className="text-on-primary-container" />
-          </div>
+          <BrandLogo logo={branding.logo} size={44} />
           <div>
-            <h1 className="text-headline-md font-bold text-primary leading-tight">OpsConsole</h1>
-            <p className="text-body-sm text-on-surface-variant">Exception Management</p>
+            <h1 className="text-headline-md font-bold text-primary leading-tight">{branding.productName}</h1>
+            <p className="text-body-sm text-on-surface-variant">{branding.tagline}</p>
           </div>
         </div>
 

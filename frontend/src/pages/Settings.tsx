@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { api, Channel, SmtpConfig } from "../api/client";
+import { useEffect, useRef, useState } from "react";
+import { api, branding as brandingApi, Channel, SmtpConfig } from "../api/client";
 import { useFetch } from "../hooks/useFetch";
 import { useAuth } from "../auth/AuthContext";
+import { useBranding } from "../branding/BrandingContext";
 import { useToast } from "../components/Toast";
+import { BrandLogo } from "../components/Layout";
 import { Icon, PageHeader, Modal, Field, EmptyState } from "../components/ui";
 import { Select } from "../components/Select";
 
@@ -59,6 +61,8 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
         <div className="lg:col-span-2 space-y-gutter">
+          {can("admin") && <BrandingCard />}
+
           <div className="glass-panel rounded-xl">
             <div className="px-4 py-3 border-b border-outline-variant flex justify-between items-center">
               <h3 className="text-title-sm text-on-surface flex items-center gap-2"><Icon name="hub" size={18} className="text-primary" /> Notification Channels</h3>
@@ -119,6 +123,112 @@ Content-Type: application/json
 
       {creating && <ChannelModal onClose={() => setCreating(false)} onSaved={() => { setCreating(false); refetch(); }} />}
       {editing && <ChannelModal channel={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); refetch(); }} />}
+    </div>
+  );
+}
+
+const ALLOWED_LOGO_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp", "image/svg+xml"];
+const MAX_LOGO_BYTES = 256 * 1024;
+
+function BrandingCard() {
+  const toast = useToast();
+  const { branding, setBranding } = useBranding();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [appName, setAppName] = useState(branding.appName);
+  const [productName, setProductName] = useState(branding.productName);
+  const [tagline, setTagline] = useState(branding.tagline);
+  const [logo, setLogo] = useState<string | null>(branding.logo);
+  const [logoChanged, setLogoChanged] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Sync local fields if branding loads/changes after mount.
+  useEffect(() => {
+    setAppName(branding.appName);
+    setProductName(branding.productName);
+    setTagline(branding.tagline);
+    setLogo(branding.logo);
+    setLogoChanged(false);
+  }, [branding]);
+
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    // Client-side guardrails (server re-validates with magic-byte checks).
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      toast.error("Only image logos are allowed (PNG, JPG, GIF, WebP, SVG).");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast.error(`Logo is too large (${Math.round(file.size / 1024)} KB). Max is 256 KB.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { setLogo(reader.result as string); setLogoChanged(true); };
+    reader.onerror = () => toast.error("Could not read that file.");
+    reader.readAsDataURL(file);
+  }
+
+  function removeLogo() {
+    setLogo(null);
+    setLogoChanged(true);
+  }
+
+  async function save() {
+    if (!appName.trim() || !productName.trim()) {
+      toast.error("App name and product name are required.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const body: any = { appName: appName.trim(), productName: productName.trim(), tagline: tagline.trim() };
+      if (logoChanged) body.logo = logo; // string (new) or null (removed)
+      const updated = await brandingApi.update(body);
+      setBranding(updated); // live-update sidebar/topbar/login
+      setLogoChanged(false);
+      toast.success("Branding updated.");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="glass-panel rounded-xl">
+      <div className="px-4 py-3 border-b border-outline-variant">
+        <h3 className="text-title-sm text-on-surface flex items-center gap-2"><Icon name="palette" size={18} className="text-primary" /> Branding</h3>
+      </div>
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-4">
+          <BrandLogo logo={logo} size={56} />
+          <div className="flex-1">
+            <p className="text-body-md text-on-surface font-medium mb-1">Logo</p>
+            <p className="text-body-sm text-on-surface-variant mb-2">PNG, JPG, GIF, WebP or SVG · max 256 KB. Square images look best.</p>
+            <div className="flex gap-2">
+              <button className="btn-secondary !h-8 text-body-sm" onClick={() => fileRef.current?.click()}>
+                <Icon name="upload" size={15} /> Upload logo
+              </button>
+              {logo && (
+                <button className="btn-ghost !h-8 text-body-sm text-error" onClick={removeLogo}>
+                  <Icon name="delete" size={15} /> Remove
+                </button>
+              )}
+            </div>
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" className="hidden" onChange={onPickFile} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="App Name (sidebar)"><input className="field" value={appName} onChange={(e) => setAppName(e.target.value)} maxLength={40} /></Field>
+          <Field label="Product Name (top bar)"><input className="field" value={productName} onChange={(e) => setProductName(e.target.value)} maxLength={40} /></Field>
+        </div>
+        <Field label="Tagline (login screen)"><input className="field" value={tagline} onChange={(e) => setTagline(e.target.value)} maxLength={80} /></Field>
+
+        <div className="flex justify-end">
+          <button className="btn-primary" onClick={save} disabled={saving}>{saving ? "Saving…" : "Save branding"}</button>
+        </div>
+      </div>
     </div>
   );
 }

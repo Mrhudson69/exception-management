@@ -81,6 +81,18 @@ export interface SetupPayload {
   smtp?: { host?: string; port?: number; user?: string; pass?: string; from?: string; secure?: boolean };
 }
 
+export interface Branding {
+  appName: string;
+  productName: string;
+  tagline: string;
+  logo: string | null;
+}
+
+export const branding = {
+  get: () => api.get<Branding>("/branding"),
+  update: (b: Partial<Branding>) => api.put<Branding>("/settings/branding", b),
+};
+
 export const auth = {
   login: (email: string, password: string) =>
     api.post<{ token: string; user: AuthUser }>("/auth/login", { email, password }),

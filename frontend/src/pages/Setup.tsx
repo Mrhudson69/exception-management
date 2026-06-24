@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../auth/AuthContext";
+import { useBranding } from "../branding/BrandingContext";
+import { BrandLogo } from "../components/Layout";
 import { Icon } from "../components/ui";
 
 export default function Setup() {
   const { completeSetup } = useAuth();
+  const { branding } = useBranding();
   const [step, setStep] = useState(1);
   const [admin, setAdmin] = useState({ name: "", email: "", password: "", confirm: "" });
   const [smtp, setSmtp] = useState({ host: "", port: 587, user: "", pass: "", from: "", secure: false });
@@ -42,11 +45,9 @@ export default function Setup() {
 
       <div className="relative w-full max-w-lg px-6">
         <div className="flex items-center gap-3 mb-6 justify-center">
-          <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center">
-            <Icon name="hub" size={24} className="text-on-primary-container" />
-          </div>
+          <BrandLogo logo={branding.logo} size={44} />
           <div>
-            <h1 className="text-headline-md font-bold text-primary leading-tight">Welcome to OpsConsole</h1>
+            <h1 className="text-headline-md font-bold text-primary leading-tight">Welcome to {branding.productName}</h1>
             <p className="text-body-sm text-on-surface-variant">Let's get your platform set up.</p>
           </div>
         </div>

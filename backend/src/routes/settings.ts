@@ -1,13 +1,35 @@
 import { Router } from "express";
 import { z } from "zod";
 import { requireRole } from "../auth/auth.js";
-import { getSmtp, saveSmtp } from "../services/settings.js";
+import { getSmtp, saveSmtp, getBranding, saveBranding } from "../services/settings.js";
 import { sendEmail } from "../services/notify.js";
+import { validateLogo } from "../services/logo.js";
 
 export const settingsRouter = Router();
 
-// SMTP configuration is admin-only.
+// These settings endpoints are admin-only.
 settingsRouter.use(requireRole("admin"));
+
+const brandingSchema = z.object({
+  appName: z.string().min(1).max(40).optional(),
+  productName: z.string().min(1).max(40).optional(),
+  tagline: z.string().max(80).optional(),
+  logo: z.string().nullable().optional(), // data URL, or null to remove, or omit to keep
+});
+
+/** Update branding (names/tagline and an optional validated logo). */
+settingsRouter.put("/branding", async (req, res) => {
+  const parsed = brandingSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+  const b = { ...parsed.data };
+
+  if (typeof b.logo === "string" && b.logo.length > 0) {
+    const result = validateLogo(b.logo);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    b.logo = result.value;
+  }
+  res.json(await saveBranding(b));
+});
 
 /** GET current SMTP settings (password masked). */
 settingsRouter.get("/smtp", async (_req, res) => {

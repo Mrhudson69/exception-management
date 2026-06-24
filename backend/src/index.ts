@@ -18,6 +18,7 @@ import { usersRouter } from "./routes/users.js";
 import { settingsRouter } from "./routes/settings.js";
 import { requireAuth, writeGuard } from "./auth/auth.js";
 import { startEscalationWorker } from "./services/escalationWorker.js";
+import { getBranding } from "./services/settings.js";
 
 const app = express();
 
@@ -33,6 +34,11 @@ app.use("/ingest", ingestRouter);
 
 // Authentication (public).
 app.use("/api/auth", authRouter);
+
+// Branding is public so the login/setup screens can show the custom logo & name.
+app.get("/api/branding", async (_req, res) => {
+  res.json(await getBranding());
+});
 
 // Runtime metadata for the UI (e.g. whether notifications are sent live).
 app.get("/api/meta", requireAuth, (_req, res) => {
