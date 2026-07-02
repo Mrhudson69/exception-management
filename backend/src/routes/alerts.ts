@@ -1,16 +1,24 @@
 import { Router } from "express";
 import { one, rows } from "../db/pool.js";
+import { getAppScope } from "../auth/scope.js";
 
 export const alertsRouter = Router();
 
 alertsRouter.get("/", async (req, res) => {
   const status = req.query.status as string | undefined;
+  const scope = await getAppScope(req.user!);
   const params: any[] = [];
-  let where = "";
+  const conditions: string[] = [];
   if (status) {
     params.push(status);
-    where = `WHERE al.status = $1`;
+    conditions.push(`al.status = $${params.length}`);
   }
+  // Restrict to applications this user is allowed to see.
+  if (!scope.all) {
+    params.push(scope.ids);
+    conditions.push(`al.application_id = ANY($${params.length})`);
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   res.json(
     await rows(
       `SELECT al.*, a.name AS application_name, th.name AS threshold_name

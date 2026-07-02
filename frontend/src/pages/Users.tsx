@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { api, ManagedUser, Role } from "../api/client";
+import { api, Application, ManagedUser, Role } from "../api/client";
 import { useFetch } from "../hooks/useFetch";
 import { useAuth } from "../auth/AuthContext";
 import { useToast } from "../components/Toast";
@@ -46,6 +46,7 @@ export default function Users() {
               <tr>
                 <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase">User</th>
                 <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase w-32">Role</th>
+                <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase w-32">App access</th>
                 <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase w-28">Status</th>
                 <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase w-32">Last login</th>
                 <th className="py-2.5 px-4 text-label-caps text-on-surface-variant uppercase w-24 text-right">Actions</th>
@@ -62,6 +63,15 @@ export default function Users() {
                     <div className="text-body-sm text-on-surface-variant font-mono">{u.email}</div>
                   </td>
                   <td className="py-3 px-4"><span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${roleMeta[u.role].cls}`}>{roleMeta[u.role].label}</span></td>
+                  <td className="py-3 px-4 text-body-sm">
+                    {u.role === "admin" || u.all_applications ? (
+                      <span className="text-on-surface-variant">All apps</span>
+                    ) : (
+                      <span className={u.application_ids.length ? "text-on-surface" : "text-error"}>
+                        {u.application_ids.length} app{u.application_ids.length === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </td>
                   <td className="py-3 px-4">
                     <span className={`inline-flex items-center gap-1.5 text-body-sm ${u.active ? "text-primary" : "text-outline"}`}>
                       <span className={`w-2 h-2 rounded-full ${u.active ? "bg-primary" : "bg-outline"}`} /> {u.active ? "Active" : "Disabled"}
@@ -94,19 +104,31 @@ function UserModal({ user, onClose, onSaved }: { user?: ManagedUser; onClose: ()
   const [role, setRole] = useState<Role>(user?.role ?? "viewer");
   const [password, setPassword] = useState("");
   const [active, setActive] = useState(user?.active ?? true);
+  const [allApps, setAllApps] = useState(user?.all_applications ?? true);
+  const [appIds, setAppIds] = useState<string[]>(user?.application_ids ?? []);
   const [saving, setSaving] = useState(false);
+  const { data: apps } = useFetch<Application[]>("/applications");
+
+  const toggleApp = (id: string, on: boolean) =>
+    setAppIds((prev) => (on ? [...new Set([...prev, id])] : prev.filter((x) => x !== id)));
 
   async function save() {
     if (!name || (!user && (!email || !password))) {
       toast.error("Fill in all required fields.");
       return;
     }
+    // Admins always see everything; non-admins restricted to none is a mistake.
+    if (role !== "admin" && !allApps && appIds.length === 0) {
+      toast.error("Select at least one application, or grant access to all.");
+      return;
+    }
     setSaving(true);
+    const access = { allApplications: allApps, applicationIds: allApps ? [] : appIds };
     try {
       if (user) {
-        await api.patch(`/users/${user.id}`, { name, role, active, ...(password ? { password } : {}) });
+        await api.patch(`/users/${user.id}`, { name, role, active, ...access, ...(password ? { password } : {}) });
       } else {
-        await api.post("/users", { name, email, role, password });
+        await api.post("/users", { name, email, role, password, ...access });
       }
       toast.success(user ? "User updated." : "User created.");
       onSaved();
@@ -130,6 +152,35 @@ function UserModal({ user, onClose, onSaved }: { user?: ManagedUser; onClose: ()
       <Field label={user ? "New Password (leave blank to keep)" : "Password"}>
         <input className="field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={user ? "••••••••" : "min 6 characters"} />
       </Field>
+
+      <Field label="Application Access">
+        {role === "admin" ? (
+          <p className="text-body-sm text-on-surface-variant">Admins can see all applications.</p>
+        ) : (
+          <>
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <input type="checkbox" checked={allApps} onChange={(e) => setAllApps(e.target.checked)} className="accent-primary w-4 h-4" />
+              <span className="text-body-sm text-on-surface">All applications</span>
+            </label>
+            {!allApps && (
+              <div className="max-h-48 overflow-y-auto border border-outline-variant rounded-lg p-1">
+                {(apps ?? []).map((a) => (
+                  <label key={a.id} className="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded hover:bg-surface-container-highest">
+                    <input type="checkbox" checked={appIds.includes(a.id)} onChange={(e) => toggleApp(a.id, e.target.checked)} className="accent-primary w-4 h-4" />
+                    <span className="text-body-sm text-on-surface">{a.name}</span>
+                    <span className="text-body-sm text-on-surface-variant font-mono ml-auto truncate max-w-[45%]">{a.slug}</span>
+                  </label>
+                ))}
+                {!apps?.length && <p className="text-body-sm text-on-surface-variant p-2">No applications yet.</p>}
+              </div>
+            )}
+            {!allApps && appIds.length === 0 && (
+              <p className="text-body-sm text-error mt-1">No apps selected — this user won't see any logs.</p>
+            )}
+          </>
+        )}
+      </Field>
+
       {user && (
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="accent-primary w-4 h-4" />

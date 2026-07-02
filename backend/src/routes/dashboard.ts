@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { es, EXCEPTIONS_INDEX } from "../es/client.js";
 import { rows } from "../db/pool.js";
+import { getAppScope } from "../auth/scope.js";
 
 export const dashboardRouter = Router();
 
@@ -8,7 +9,15 @@ export const dashboardRouter = Router();
 dashboardRouter.get("/", async (req, res) => {
   const range = (req.query.range as string) || "24h";
   const interval = range === "1h" ? "5m" : range === "7d" ? "6h" : "1h";
-  const baseFilter = [{ range: { timestamp: { gte: `now-${range}` } } }];
+
+  // Restrict everything to the applications this user is allowed to see.
+  const scope = await getAppScope(req.user!);
+  const appFilter = scope.all ? [] : [{ terms: { app_slug: scope.slugs } }];
+  const baseFilter = [...appFilter, { range: { timestamp: { gte: `now-${range}` } } }];
+  // Postgres-side app filter (alerts/applications) for restricted users.
+  const alertsWhere = scope.all ? "" : ` AND application_id = ANY($1)`;
+  const appsWhere = scope.all ? "" : ` AND id = ANY($1)`;
+  const pgParams = scope.all ? [] : [scope.ids];
 
   try {
     const [totals, byApp, trend, recent, activeAlerts, appCount] = await Promise.all([
@@ -38,10 +47,10 @@ dashboardRouter.get("/", async (req, res) => {
         index: EXCEPTIONS_INDEX,
         size: 8,
         sort: [{ timestamp: { order: "desc" } }],
-        query: { match_all: {} },
+        query: { bool: { filter: appFilter } },
       }),
-      rows<{ c: string }>(`SELECT count(*)::int AS c FROM alerts WHERE status = 'open'`),
-      rows<{ c: string }>(`SELECT count(*)::int AS c FROM applications WHERE status <> 'suspended'`),
+      rows<{ c: string }>(`SELECT count(*)::int AS c FROM alerts WHERE status = 'open'${alertsWhere}`, pgParams),
+      rows<{ c: string }>(`SELECT count(*)::int AS c FROM applications WHERE status <> 'suspended'${appsWhere}`, pgParams),
     ]);
 
     const totalHits =

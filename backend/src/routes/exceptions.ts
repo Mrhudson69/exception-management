@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { es, EXCEPTIONS_INDEX } from "../es/client.js";
+import { getAppScope } from "../auth/scope.js";
 
 export const exceptionsRouter = Router();
 
@@ -19,6 +20,9 @@ exceptionsRouter.get("/", async (req, res) => {
   } = req.query as Record<string, string>;
 
   const filter: any[] = [];
+  // Limit results to the applications this user is allowed to see.
+  const scope = await getAppScope(req.user!);
+  if (!scope.all) filter.push({ terms: { app_slug: scope.slugs } });
   if (app) filter.push({ term: { app_slug: app } });
   if (environment && environment !== "all") filter.push({ term: { environment } });
   if (host) filter.push({ term: { host } });
@@ -70,6 +74,12 @@ exceptionsRouter.get("/", async (req, res) => {
 exceptionsRouter.get("/:id", async (req, res) => {
   try {
     const doc = await es.get({ index: EXCEPTIONS_INDEX, id: req.params.id });
+    const source = doc._source as { app_slug?: string };
+    const scope = await getAppScope(req.user!);
+    // Don't leak a document for an application the user isn't allowed to see.
+    if (!scope.all && !scope.slugs.includes(source.app_slug ?? "")) {
+      return res.status(404).json({ error: "not_found" });
+    }
     res.json({ id: doc._id, ...(doc._source as object) });
   } catch {
     res.status(404).json({ error: "not_found" });

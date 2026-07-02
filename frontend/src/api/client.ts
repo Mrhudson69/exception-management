@@ -62,6 +62,10 @@ export interface ManagedUser extends AuthUser {
   active: boolean;
   last_login_at: string | null;
   created_at: string;
+  /** When true (or role=admin) the user can see every application. */
+  all_applications: boolean;
+  /** Assigned application ids used when all_applications is false. */
+  application_ids: string[];
 }
 
 export interface SmtpConfig {

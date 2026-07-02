@@ -159,3 +159,20 @@ CREATE TABLE IF NOT EXISTS alert_escalations (
   fired_at           TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (alert_id, escalation_rule_id)
 );
+
+-- ---------------------------------------------------------------------------
+-- Per-user application access (application-scoped visibility).
+--   all_applications = true (or role = 'admin') -> sees every application.
+--   otherwise the user only sees applications listed in user_applications.
+-- Defaults to true so existing users keep full visibility on upgrade.
+-- (Defined here because it references the applications table above.)
+-- ---------------------------------------------------------------------------
+ALTER TABLE users ADD COLUMN IF NOT EXISTS all_applications BOOLEAN NOT NULL DEFAULT true;
+
+CREATE TABLE IF NOT EXISTS user_applications (
+  user_id        UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  application_id UUID NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+  PRIMARY KEY (user_id, application_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_applications_user ON user_applications(user_id);

@@ -3,6 +3,7 @@ import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { one, rows } from "../db/pool.js";
 import { es, EXCEPTIONS_INDEX } from "../es/client.js";
+import { getAppScope } from "../auth/scope.js";
 
 export const applicationsRouter = Router();
 
@@ -10,13 +11,19 @@ const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 /** GET /api/applications — list with team/group names and 24h error counts. */
-applicationsRouter.get("/", async (_req, res) => {
+applicationsRouter.get("/", async (req, res) => {
+  // Restricted users only see the applications assigned to them.
+  const scope = await getAppScope(req.user!);
+  const scopeWhere = scope.all ? "" : ` WHERE a.id = ANY($1)`;
+  const scopeParams = scope.all ? [] : [scope.ids];
   const apps = await rows(
     `SELECT a.*, t.name AS owning_team_name, g.name AS notification_group_name
        FROM applications a
        LEFT JOIN teams t ON t.id = a.owning_team_id
        LEFT JOIN notification_groups g ON g.id = a.notification_group_id
-      ORDER BY a.name ASC`
+      ${scopeWhere}
+      ORDER BY a.name ASC`,
+    scopeParams
   );
 
   // Enrich with 24h error counts from Elasticsearch.
