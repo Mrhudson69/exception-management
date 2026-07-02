@@ -85,8 +85,8 @@ export default function Settings() {
                       <button onClick={() => sendTest(c)} disabled={testing === c.id} className="btn-secondary !h-8 !px-2.5 text-body-sm" title="Send a live test notification">
                         <Icon name={testing === c.id ? "progress_activity" : "send"} size={15} className={testing === c.id ? "animate-spin" : ""} /> Test
                       </button>
-                      <button onClick={() => toggle(c)} title={c.enabled ? "Enabled" : "Disabled"} className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${c.enabled ? "bg-primary-container" : "bg-surface-bright"}`}>
-                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-on-surface transition-transform ${c.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
+                      <button onClick={() => toggle(c)} title={c.enabled ? "Enabled" : "Disabled"} className={`w-9 h-5 rounded-full p-0.5 flex items-center transition-colors shrink-0 ${c.enabled ? "bg-primary-container" : "bg-surface-bright"}`}>
+                        <span className={`block w-4 h-4 rounded-full bg-on-surface transition-transform ${c.enabled ? "translate-x-4" : "translate-x-0"}`} />
                       </button>
                       <button onClick={() => setEditing(c)} className="icon-btn"><Icon name="edit" size={18} /></button>
                     </div>
