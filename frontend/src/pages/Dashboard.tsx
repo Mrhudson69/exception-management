@@ -21,9 +21,14 @@ function Kpi({ label, value, icon, accent, hint, hintClass }: { label: string; v
   );
 }
 
+const REFRESH_MS = 5000;
+
 export default function Dashboard() {
   const [range, setRange] = useState<(typeof ranges)[number]>("24h");
-  const { data, loading } = useFetch<DashboardData>(`/dashboard?range=${range}`, [range]);
+  const [live, setLive] = useState(true);
+  const { data, loading } = useFetch<DashboardData>(`/dashboard?range=${range}`, [range], {
+    pollMs: live ? REFRESH_MS : 0,
+  });
 
   const k = data?.kpis;
   const maxApp = Math.max(1, ...(data?.topApps.map((a) => a.count) ?? [1]));
@@ -35,7 +40,16 @@ export default function Dashboard() {
           <h2 className="text-headline-md text-on-surface mb-1">Exception Management Center</h2>
           <p className="text-body-sm text-on-surface-variant">Real-time telemetry and error monitoring across all clusters.</p>
         </div>
-        <div className="bg-surface-container border border-outline-variant rounded-full flex items-center p-1 self-start sm:self-auto">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <button
+          onClick={() => setLive((v) => !v)}
+          title={live ? `Auto-refresh on — every ${REFRESH_MS / 1000}s` : "Auto-refresh paused"}
+          className="bg-surface-container border border-outline-variant rounded-full flex items-center gap-2 px-3 py-1.5 text-body-sm text-on-surface-variant hover:text-on-surface transition-colors"
+        >
+          <span className={`h-2 w-2 rounded-full ${live ? "bg-emerald-400 animate-pulse" : "bg-outline"}`} />
+          {live ? "Live" : "Paused"}
+        </button>
+        <div className="bg-surface-container border border-outline-variant rounded-full flex items-center p-1">
           {ranges.map((r) => (
             <button
               key={r}
@@ -47,6 +61,7 @@ export default function Dashboard() {
               {r.toUpperCase()}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
