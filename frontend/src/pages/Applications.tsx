@@ -7,10 +7,11 @@ import { Icon, PageHeader, StatusBadge, Modal, Field } from "../components/ui";
 import { Select } from "../components/Select";
 
 export default function Applications() {
-  const { can } = useAuth();
+  const { can, restricted } = useAuth();
   const { data: apps, refetch } = useFetch<Application[]>("/applications");
-  const { data: teams } = useFetch<Team[]>("/teams");
-  const { data: groups } = useFetch<NotificationGroup[]>("/notification-groups");
+  // Team/group pickers come from config endpoints that restricted users can't read.
+  const { data: teams } = useFetch<Team[]>(restricted ? null : "/teams");
+  const { data: groups } = useFetch<NotificationGroup[]>(restricted ? null : "/notification-groups");
   const [selected, setSelected] = useState<Application | null>(null);
   const [creating, setCreating] = useState(false);
   const [params, setParams] = useSearchParams();
@@ -34,7 +35,7 @@ export default function Applications() {
   return (
     <div>
       <PageHeader eyebrow="Configuration" title="Applications">
-        {can("editor") && (
+        {can("editor") && !restricted && (
           <button className="btn-primary" onClick={() => setCreating(true)}>
             <Icon name="add" size={16} /> Register App
           </button>

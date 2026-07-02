@@ -9,6 +9,8 @@ interface AuthState {
   completeSetup: (payload: SetupPayload) => Promise<void>;
   logout: () => void;
   can: (min: Role) => boolean;
+  /** True when the user is limited to specific applications (blocks config screens). */
+  restricted: boolean;
 }
 
 const rank: Record<Role, number> = { viewer: 0, editor: 1, admin: 2 };
@@ -59,9 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const can = (min: Role) => (user ? rank[user.role] >= rank[min] : false);
+  const restricted = !!user && user.role !== "admin" && user.all_applications === false;
 
   return (
-    <AuthCtx.Provider value={{ user, loading, needsSetup, login, completeSetup, logout, can }}>
+    <AuthCtx.Provider value={{ user, loading, needsSetup, login, completeSetup, logout, can, restricted }}>
       {children}
     </AuthCtx.Provider>
   );

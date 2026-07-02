@@ -65,6 +65,7 @@ interface UserRow {
   password_hash: string;
   role: Role;
   active: boolean;
+  all_applications: boolean;
 }
 
 const loginSchema = z.object({
@@ -86,9 +87,13 @@ authRouter.post("/login", async (req, res) => {
   await one(`UPDATE users SET last_login_at = now() WHERE id = $1 RETURNING id`, [user.id]);
 
   const principal = { id: user.id, email: user.email, name: user.name, role: user.role };
-  res.json({ token: signToken(principal), user: principal });
+  res.json({ token: signToken(principal), user: { ...principal, all_applications: user.all_applications } });
 });
 
-authRouter.get("/me", requireAuth, (req, res) => {
-  res.json({ user: req.user });
+authRouter.get("/me", requireAuth, async (req, res) => {
+  const row = await one<{ all_applications: boolean }>(
+    `SELECT all_applications FROM users WHERE id = $1`,
+    [req.user!.id]
+  );
+  res.json({ user: { ...req.user, all_applications: row?.all_applications ?? true } });
 });

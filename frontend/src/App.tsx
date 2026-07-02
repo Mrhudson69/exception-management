@@ -18,7 +18,7 @@ import Docs from "./pages/Docs";
 import Support from "./pages/Support";
 
 export default function App() {
-  const { user, loading, needsSetup } = useAuth();
+  const { user, loading, needsSetup, restricted } = useAuth();
 
   if (loading) {
     return (
@@ -38,11 +38,12 @@ export default function App() {
         <Route path="/applications" element={<Applications />} />
         <Route path="/errors" element={<ErrorBrowser />} />
         <Route path="/alerts" element={<Alerts />} />
-        <Route path="/teams" element={<Teams />} />
-        <Route path="/notification-groups" element={<NotificationGroups />} />
-        <Route path="/thresholds" element={<Thresholds />} />
-        <Route path="/escalations" element={<Escalations />} />
-        <Route path="/settings" element={<Settings />} />
+        {/* Global config screens are hidden from app-restricted users (they redirect to "/"). */}
+        {!restricted && <Route path="/teams" element={<Teams />} />}
+        {!restricted && <Route path="/notification-groups" element={<NotificationGroups />} />}
+        {!restricted && <Route path="/thresholds" element={<Thresholds />} />}
+        {!restricted && <Route path="/escalations" element={<Escalations />} />}
+        {!restricted && <Route path="/settings" element={<Settings />} />}
         <Route path="/docs" element={<Docs />} />
         <Route path="/support" element={<Support />} />
         {user.role === "admin" && <Route path="/users" element={<Users />} />}

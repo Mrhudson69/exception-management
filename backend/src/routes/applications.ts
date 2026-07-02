@@ -10,6 +10,17 @@ export const applicationsRouter = Router();
 const slugify = (s: string) =>
   s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+/** Block writes to an application the user isn't assigned to (restricted users). */
+async function requireAppInScope(req: any, res: any, next: any) {
+  try {
+    const scope = await getAppScope(req.user);
+    if (scope.all || scope.ids.includes(req.params.id)) return next();
+    return res.status(404).json({ error: "not_found" });
+  } catch (err) {
+    next(err);
+  }
+}
+
 /** GET /api/applications — list with team/group names and 24h error counts. */
 applicationsRouter.get("/", async (req, res) => {
   // Restricted users only see the applications assigned to them.
@@ -56,6 +67,9 @@ const appSchema = z.object({
 });
 
 applicationsRouter.post("/", async (req, res) => {
+  // Creating a new application is a global action — restricted users can't.
+  const scope = await getAppScope(req.user!);
+  if (!scope.all) return res.status(403).json({ error: "forbidden_restricted" });
   const parsed = appSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const b = parsed.data;
@@ -78,7 +92,7 @@ applicationsRouter.post("/", async (req, res) => {
   res.status(201).json(app);
 });
 
-applicationsRouter.patch("/:id", async (req, res) => {
+applicationsRouter.patch("/:id", requireAppInScope, async (req, res) => {
   const parsed = appSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
   const b = parsed.data;
@@ -106,13 +120,13 @@ applicationsRouter.patch("/:id", async (req, res) => {
   res.json(app);
 });
 
-applicationsRouter.delete("/:id", async (req, res) => {
+applicationsRouter.delete("/:id", requireAppInScope, async (req, res) => {
   await one(`DELETE FROM applications WHERE id = $1 RETURNING id`, [req.params.id]);
   res.status(204).end();
 });
 
 /** Rotate the ingest key. */
-applicationsRouter.post("/:id/rotate-key", async (req, res) => {
+applicationsRouter.post("/:id/rotate-key", requireAppInScope, async (req, res) => {
   const ingestKey = `ik_${randomBytes(16).toString("hex")}`;
   const app = await one(
     `UPDATE applications SET ingest_key = $2, updated_at = now() WHERE id = $1 RETURNING *`,

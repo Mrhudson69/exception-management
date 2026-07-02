@@ -17,6 +17,7 @@ import { authRouter } from "./routes/auth.js";
 import { usersRouter } from "./routes/users.js";
 import { settingsRouter } from "./routes/settings.js";
 import { requireAuth, writeGuard } from "./auth/auth.js";
+import { requireUnrestricted } from "./auth/scope.js";
 import { startEscalationWorker } from "./services/escalationWorker.js";
 import { getBranding } from "./services/settings.js";
 
@@ -52,12 +53,14 @@ app.use("/api/settings", requireAuth, settingsRouter); // admin-only enforced in
 app.use("/api/exceptions", requireAuth, exceptionsRouter);
 app.use("/api/dashboard", requireAuth, dashboardRouter);
 app.use("/api/applications", requireAuth, writeGuard, applicationsRouter);
-app.use("/api/teams", requireAuth, writeGuard, teamsRouter);
-app.use("/api/channels", requireAuth, writeGuard, channelsRouter);
-app.use("/api/notification-groups", requireAuth, writeGuard, notificationGroupsRouter);
-app.use("/api/thresholds", requireAuth, writeGuard, thresholdsRouter);
-app.use("/api/escalations", requireAuth, writeGuard, escalationsRouter);
 app.use("/api/alerts", requireAuth, writeGuard, alertsRouter);
+
+// Global configuration screens — blocked for app-restricted users.
+app.use("/api/teams", requireAuth, requireUnrestricted, writeGuard, teamsRouter);
+app.use("/api/channels", requireAuth, requireUnrestricted, writeGuard, channelsRouter);
+app.use("/api/notification-groups", requireAuth, requireUnrestricted, writeGuard, notificationGroupsRouter);
+app.use("/api/thresholds", requireAuth, requireUnrestricted, writeGuard, thresholdsRouter);
+app.use("/api/escalations", requireAuth, requireUnrestricted, writeGuard, escalationsRouter);
 
 // Central error handler.
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

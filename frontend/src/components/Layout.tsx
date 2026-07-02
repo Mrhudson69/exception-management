@@ -25,21 +25,22 @@ export function BrandLogo({ logo, size = 32 }: { logo: string | null; size?: num
   );
 }
 
-const navItems: { to: string; icon: string; label: string; end?: boolean; minRole?: Role }[] = [
+// `config: true` items are global configuration screens hidden from app-restricted users.
+const navItems: { to: string; icon: string; label: string; end?: boolean; minRole?: Role; config?: boolean }[] = [
   { to: "/", icon: "dashboard", label: "Dashboard", end: true },
   { to: "/applications", icon: "apps", label: "Applications" },
   { to: "/errors", icon: "bug_report", label: "Error Logs" },
   { to: "/alerts", icon: "warning", label: "Alerts" },
-  { to: "/teams", icon: "group", label: "Teams" },
-  { to: "/notification-groups", icon: "notifications_active", label: "Notification Groups" },
-  { to: "/thresholds", icon: "speed", label: "Thresholds" },
-  { to: "/escalations", icon: "trending_up", label: "Escalations" },
+  { to: "/teams", icon: "group", label: "Teams", config: true },
+  { to: "/notification-groups", icon: "notifications_active", label: "Notification Groups", config: true },
+  { to: "/thresholds", icon: "speed", label: "Thresholds", config: true },
+  { to: "/escalations", icon: "trending_up", label: "Escalations", config: true },
   { to: "/users", icon: "manage_accounts", label: "Users", minRole: "admin" },
-  { to: "/settings", icon: "settings", label: "Settings" },
+  { to: "/settings", icon: "settings", label: "Settings", config: true },
 ];
 
 function SideNav({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => void }) {
-  const { can } = useAuth();
+  const { can, restricted } = useAuth();
   const { branding } = useBranding();
   return (
     <nav
@@ -60,7 +61,7 @@ function SideNav({ mobileOpen, onClose }: { mobileOpen: boolean; onClose: () => 
         </div>
       </div>
       <div className="flex-1 overflow-y-auto px-2 space-y-1">
-        {navItems.filter((i) => !i.minRole || can(i.minRole)).map((item) => (
+        {navItems.filter((i) => (!i.minRole || can(i.minRole)) && !(i.config && restricted)).map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

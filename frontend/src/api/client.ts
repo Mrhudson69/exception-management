@@ -56,6 +56,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: Role;
+  /** False (for a non-admin) means the user is limited to specific applications. */
+  all_applications?: boolean;
 }
 
 export interface ManagedUser extends AuthUser {

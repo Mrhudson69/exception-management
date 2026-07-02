@@ -1,3 +1,4 @@
+import type { NextFunction, Request, Response } from "express";
 import type { AuthUser } from "./auth.js";
 import { one } from "../db/pool.js";
 
@@ -37,4 +38,19 @@ export async function getAppScope(user: AuthUser): Promise<AppScope> {
 
   if (!row || row.all_applications) return UNRESTRICTED;
   return { all: false, slugs: row.slugs ?? [], ids: row.ids ?? [] };
+}
+
+/**
+ * Gate for global configuration screens (teams, notification groups, channels,
+ * thresholds, escalations). App-restricted users can't manage config that spans
+ * applications beyond their scope, so they're blocked entirely.
+ */
+export async function requireUnrestricted(req: Request, res: Response, next: NextFunction) {
+  try {
+    const scope = await getAppScope(req.user!);
+    if (!scope.all) return res.status(403).json({ error: "forbidden_restricted" });
+    next();
+  } catch (err) {
+    next(err);
+  }
 }
