@@ -138,7 +138,7 @@ function ResponsibilityPanel({ app, teams, groups, onSaved, onDeleted }: { app: 
         </Field>
         <Field label="Status">
           <Select value={status} onChange={(v) => setStatus(v as Application["status"])}
-            options={["healthy", "warning", "degraded", "critical", "suspended"].map((s) => ({ value: s, label: s }))} />
+            options={["offline", "healthy", "warning", "degraded", "critical", "suspended"].map((s) => ({ value: s, label: s }))} />
         </Field>
       </div>
 

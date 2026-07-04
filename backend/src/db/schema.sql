@@ -82,8 +82,10 @@ CREATE TABLE IF NOT EXISTS applications (
   ingest_key            TEXT NOT NULL UNIQUE,         -- secret token apps send in X-Api-Key
   description           TEXT,
   environment           TEXT NOT NULL DEFAULT 'production',
-  status                TEXT NOT NULL DEFAULT 'healthy'
-                        CHECK (status IN ('healthy', 'warning', 'degraded', 'critical', 'suspended')),
+  -- New apps start 'offline' (enrolled but never reported); they flip to
+  -- 'healthy' on their first successful ingest.
+  status                TEXT NOT NULL DEFAULT 'offline'
+                        CHECK (status IN ('healthy', 'warning', 'degraded', 'critical', 'suspended', 'offline')),
   owning_team_id        UUID REFERENCES teams(id) ON DELETE SET NULL,
   notification_group_id UUID REFERENCES notification_groups(id) ON DELETE SET NULL,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -176,3 +178,12 @@ CREATE TABLE IF NOT EXISTS user_applications (
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_applications_user ON user_applications(user_id);
+
+-- ---------------------------------------------------------------------------
+-- Add the 'offline' application status on existing databases (idempotent).
+-- New apps default to 'offline' until their first ingest marks them 'healthy'.
+-- ---------------------------------------------------------------------------
+ALTER TABLE applications ALTER COLUMN status SET DEFAULT 'offline';
+ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_status_check;
+ALTER TABLE applications ADD CONSTRAINT applications_status_check
+  CHECK (status IN ('healthy', 'warning', 'degraded', 'critical', 'suspended', 'offline'));

@@ -21,6 +21,7 @@ export const statusStyles: Record<string, { text: string; dot: string; label: st
   degraded: { text: "text-tertiary", dot: "bg-tertiary", label: "Degraded" },
   critical: { text: "text-error", dot: "bg-error", label: "Critical" },
   suspended: { text: "text-outline", dot: "bg-outline", label: "Suspended" },
+  offline: { text: "text-on-surface-variant", dot: "bg-on-surface-variant", label: "Offline" },
 };
 
 export function SeverityBadge({ severity }: { severity: string }) {

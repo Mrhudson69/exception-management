@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { es, EXCEPTIONS_INDEX } from "../es/client.js";
-import { one } from "../db/pool.js";
+import { one, query } from "../db/pool.js";
 import { fingerprint, inferCategory, inferSeverity } from "../services/categorize.js";
 import { evaluateThresholds } from "../services/alertEngine.js";
 
@@ -88,6 +88,14 @@ ingestRouter.post("/", async (req, res) => {
   if (!app) return res.status(500).json({ error: "application_resolution_failed" });
   if (app.status === "suspended") {
     return res.status(202).json({ status: "suppressed", reason: "application_suspended" });
+  }
+
+  // First successful ingest confirms the app integrated correctly: offline -> healthy.
+  if (app.status === "offline") {
+    query(
+      `UPDATE applications SET status = 'healthy', updated_at = now() WHERE id = $1 AND status = 'offline'`,
+      [app.id]
+    ).catch((err) => console.error("[ingest] status flip failed", err));
   }
 
   const exceptionType = body.exceptionType ?? body.type ?? "Error";

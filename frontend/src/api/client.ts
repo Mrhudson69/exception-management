@@ -115,7 +115,7 @@ export interface Application {
   ingest_key: string;
   description: string | null;
   environment: string;
-  status: "healthy" | "warning" | "degraded" | "critical" | "suspended";
+  status: "healthy" | "warning" | "degraded" | "critical" | "suspended" | "offline";
   owning_team_id: string | null;
   notification_group_id: string | null;
   owning_team_name?: string | null;

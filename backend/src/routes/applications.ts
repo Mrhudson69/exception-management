@@ -61,7 +61,7 @@ const appSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional(),
   environment: z.string().optional(),
-  status: z.enum(["healthy", "warning", "degraded", "critical", "suspended"]).optional(),
+  status: z.enum(["healthy", "warning", "degraded", "critical", "suspended", "offline"]).optional(),
   owningTeamId: z.string().uuid().nullable().optional(),
   notificationGroupId: z.string().uuid().nullable().optional(),
 });
@@ -84,7 +84,7 @@ applicationsRouter.post("/", async (req, res) => {
       ingestKey,
       b.description ?? null,
       b.environment ?? "production",
-      b.status ?? "healthy",
+      b.status ?? "offline",
       b.owningTeamId ?? null,
       b.notificationGroupId ?? null,
     ]
